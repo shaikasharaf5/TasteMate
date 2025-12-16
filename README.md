@@ -1,77 +1,142 @@
-Diet Recommendation System
+# AI-Based Food & Workout Recommendation System
 
-This is a diet recommendation system that uses the USDA API to provide personalized diet recommendations. The application is built with Python and can be accessed via a web interface hosted on http://localhost:5000.
+This is a Flask-based web application that provides **personalized food and workout recommendations** using **Google Gemini AI**.  
+Recommendations are generated based on user details such as age, gender, diet preference, health conditions, allergies, and region.
 
-Features
+---
 
-Personalized diet recommendations based on user inputs.
+## 🚀 Features
 
-Integration with the USDA API for nutritional data.
+- Personalized breakfast & dinner suggestions
+- Workout recommendations
+- Gemini AI integration
+- Secure API key handling using `.env`
+- Flask backend with HTML templates
+- Robust JSON handling for AI responses
 
-Easy-to-use web interface.
+---
 
-Prerequisites
+## 🛠 Tech Stack
 
-Before running the application, ensure you have the following installed:
+- **Backend:** Python, Flask
+- **AI:** Google Gemini API
+- **Frontend:** HTML, CSS
+- **Environment Management:** python-dotenv
+- **Version Control:** Git & GitHub
 
-Python 3.7 or higher
+---
 
-Flask (Python web framework)
+## 📁 Project Structure
 
-An active USDA API key
+project/
+│── app.py
+│── requirements.txt
+│── .env
+│── .gitignore
+│── README.md
+│── templates/
+│ ├── details.html
+│ └── result.html
+└── static/
 
-Installation
+---
 
-Clone the repository:
+## ⚙️ Prerequisites
 
-git clone <https://github.com/shaikasharaf5/TasteMate.git >
+- Python 3.9 or higher
+- pip
+- Git
+- Gemini API key
 
+---
 
-Install required Python packages:
+## 🔐 Environment Setup
 
+### 1️⃣ Create a `.env` file (DO NOT COMMIT)
+
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+Make sure .env is listed in .gitignore.
+📦 Install Dependencies
 pip install -r requirements.txt
 
-Set up your USDA API key:
+▶️ How to Run the Project
+1️⃣ Clone the repository
+git clone https://github.com/USERNAME/REPO_NAME.git
+cd REPO_NAME
 
-Create a .env file in the project root.
+2️⃣ (Optional but recommended) Create virtual environment
 
-Add the following line to the .env file:
+Windows
 
-USDA_API_KEY=<your_api_key>
+python -m venv venv
+venv\Scripts\activate
 
-Usage
 
-Launch the application:
+Linux / macOS
 
-python USDA.py
+python3 -m venv venv
+source venv/bin/activate
 
-Open your browser and go to:
+3️⃣ Run the Flask app
+python app.py
 
-http://localhost:5000
+4️⃣ Open in Browser
+http://127.0.0.1:5000/
 
-Follow the instructions on the web interface to get personalized diet recommendations.
+🧪 How It Works
 
-File Structure
+User fills the form with personal details
 
-project-folder/
-├── app.py               # Main application file
-├── requirements.txt     # Python dependencies
-├── templates/           # HTML templates for the web interface
-├── static/              # Static assets (CSS, JS, images)
-├── .env                 # Environment variables (not included in the repository)
-└── README.md            # Project documentation
+Data is sent to Flask backend
 
-API Integration
+Gemini AI generates recommendations
 
-This project integrates with the USDA API to fetch nutritional data. For more information about the USDA API, visit their official documentation.
+JSON response is safely parsed
 
-Contributing
+Results are displayed on UI
 
-Contributions are welcome! If you'd like to contribute, please fork the repository and submit a pull request.
+🔒 Security Notes
 
-Acknowledgments
+Never hardcode API keys
 
-USDA API for providing nutritional data.
+Never push .env to GitHub
 
-Flask for the web framework.
+Rotate keys if accidentally exposed
 
+Use environment variables in production
+
+📌 Future Enhancements
+
+Calorie & macro calculation
+
+User authentication
+
+Recommendation history
+
+Indian regional food optimization
+
+Database integration (MongoDB / PostgreSQL)
+
+MERN stack version
+
+📜 License
+
+This project is intended for educational and learning purposes.
+
+
+---
+
+## ✅ You now have
+✔ `requirements.txt`  
+✔ `.gitignore`  
+✔ Full `README.md`  
+
+If you want next, I can:
+- Generate `requirements.txt` automatically from your environment  
+- Add screenshots section to README  
+- Write a **college project report**  
+- Convert this to **MERN**  
+- Add **nutrition math (BMI, BMR, TDEE)**  
+
+Just tell me the next step.
