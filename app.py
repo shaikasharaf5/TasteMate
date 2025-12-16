@@ -1,35 +1,30 @@
 from dotenv import load_dotenv
-
-
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for, session
 import google.generativeai as genai
 import json
 import re
 import os
 
-# Load environment variables
+# =========================
+# Setup
+# =========================
 load_dotenv()
 
-# Read API key safely
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
 if not GEMINI_API_KEY:
-    raise RuntimeError("GEMINI_API_KEY not found in environment variables")
+    raise RuntimeError("GEMINI_API_KEY not found")
 
 genai.configure(api_key=GEMINI_API_KEY)
-
 model = genai.GenerativeModel("gemini-2.5-flash")
 
 app = Flask(__name__)
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-key")  # required for session
+
 
 # =========================
 # Helper: Safe JSON Extractor
 # =========================
 def extract_json(text):
-    """
-    Extracts the first valid JSON object from Gemini output.
-    Prevents crashes due to extra text.
-    """
     match = re.search(r'\{[\s\S]*\}', text)
     if not match:
         raise ValueError("No JSON found in Gemini response")
@@ -61,7 +56,7 @@ def recommend():
         foodtype = request.form['foodtype']
 
         # -------------------------
-        # Gemini Prompt
+        # Prompt
         # -------------------------
         prompt = f"""
         You are a certified nutritionist and fitness coach.
@@ -77,15 +72,12 @@ def recommend():
         - Region: {region}
         - Preferred food type: {foodtype}
 
-        Generate personalized recommendations.
+        STRICT RULES:
+        - Do NOT include allergic foods
+        - Prefer regional foods if possible
+        - Respect diet preference strictly
 
-        IMPORTANT:
-        - Respond ONLY in valid JSON
-        - No explanations
-        - No markdown
-        - No extra text
-
-        JSON format:
+        Respond ONLY in valid JSON:
         {{
           "breakfast": ["item1", "item2", "item3"],
           "dinner": ["item1", "item2", "item3"],
@@ -93,38 +85,42 @@ def recommend():
         }}
         """
 
-        # -------------------------
-        # Gemini Call
-        # -------------------------
         response = model.generate_content(prompt)
-        # Debug (optional – comment after testing)
         print("RAW GEMINI OUTPUT:\n", response.text)
 
-        # -------------------------
-        # Parse Gemini Output Safely
-        # -------------------------
         data = extract_json(response.text)
 
         # -------------------------
-        # Render Results
+        # Store results in session
         # -------------------------
-        return render_template(
-            'result.html',
-            breakfast_names=data["breakfast"],
-            dinner_names=data["dinner"],
-            workout_names=data["workouts"],
-            restaurant_names=[]
-        )
+        session["results"] = data
+
+        return redirect(url_for("results"))
 
     except Exception as e:
-        # Safe fallback (never crash app)
-        return render_template(
-            'result.html',
-            breakfast_names=["Oats", "Fruit Bowl", "Boiled Eggs"],
-            dinner_names=["Rice & Dal", "Vegetable Curry", "Salad"],
-            workout_names=["Walking", "Yoga", "Stretching"],
-            restaurant_names=[]
-        )
+        print("ERROR:", e)
+
+        session["results"] = {
+            "breakfast": ["Oats", "Fruit Bowl", "Boiled Eggs"],
+            "dinner": ["Rice & Dal", "Vegetable Curry", "Salad"],
+            "workouts": ["Walking", "Yoga", "Stretching"]
+        }
+        return redirect(url_for("results"))
+
+
+@app.route('/results')
+def results():
+    data = session.get("results")
+
+    if not data:
+        return redirect(url_for("index"))
+
+    return render_template(
+        'result.html',
+        breakfast_names=data["breakfast"],
+        dinner_names=data["dinner"],
+        workout_names=data["workouts"]
+    )
 
 
 # =========================
@@ -133,4 +129,3 @@ def recommend():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-

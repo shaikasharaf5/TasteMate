@@ -13,19 +13,28 @@
 
     <div class="container mt-5">
       <h3>Restaurants:</h3>
-      {% for i in restaurant_names %}
-      <p>{{i}}</p>
-      {% endfor %}
+      <h3>Breakfast</h3>
+<ul>
+  {% for item in breakfast_names %}
+    <li>{{ item }}</li>
+  {% endfor %}
+</ul>
 
-      <h3>BreakFast</h3>
-      {% for i in breakfast_names %}
-      <p>{{i}}</p>
-      {% endfor %}
+<h3>Dinner</h3>
+<ul>
+  {% for item in dinner_names %}
+    <li>{{ item }}</li>
+  {% endfor %}
+</ul>
 
-      <h3>Dinner</h3>
-      {% for i in dinner_names %}
-      <p>{{i}}</p>
-      {% endfor %}
+<h3>Workouts</h3>
+<ul>
+  {% for item in workout_names %}
+    <li>{{ item }}</li>
+  {% endfor %}
+</ul>
+
+
     </div>
 
     <!-- Add Bootstrap JS and jQuery -->
