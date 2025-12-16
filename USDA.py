@@ -1,36 +1,55 @@
-from flask import Flask, render_template, request
-import requests
-import os
-import re
+from dotenv import load_dotenv
 
-# Flask app setup
+
+from flask import Flask, render_template, request
+import google.generativeai as genai
+import json
+import re
+import os
+
+# Load environment variables
+load_dotenv()
+
+# Read API key safely
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+if not GEMINI_API_KEY:
+    raise RuntimeError("GEMINI_API_KEY not found in environment variables")
+
+genai.configure(api_key=GEMINI_API_KEY)
+
+model = genai.GenerativeModel("gemini-2.5-flash")
+
 app = Flask(__name__)
 
-# USDA API Key
-USDA_API_KEY = "vkMS6MLFv7HK6g43Ex0vU9yRurcM66JGDDrcoeWe"  # Replace with your actual USDA API key
-USDA_API_URL = "https://api.nal.usda.gov/fdc/v1/foods/search"
+# =========================
+# Helper: Safe JSON Extractor
+# =========================
+def extract_json(text):
+    """
+    Extracts the first valid JSON object from Gemini output.
+    Prevents crashes due to extra text.
+    """
+    match = re.search(r'\{[\s\S]*\}', text)
+    if not match:
+        raise ValueError("No JSON found in Gemini response")
+    return json.loads(match.group())
 
-def fetch_usda_data(query, api_key):
-    """Fetch food data from the USDA API based on a query."""
-    params = {
-        "query": query,
-        "api_key": api_key,
-        "pageSize": 10  # Number of results per request
-    }
-    response = requests.get(USDA_API_URL, params=params)
-    if response.status_code == 200:
-        return response.json()
-    else:
-        response.raise_for_status()
 
+# =========================
+# Routes
+# =========================
 @app.route('/')
 def index():
     return render_template('details.html')
 
+
 @app.route('/recommend', methods=['POST'])
 def recommend():
-    if request.method == "POST":
-        # Retrieve user inputs
+    try:
+        # -------------------------
+        # User Inputs
+        # -------------------------
         age = request.form['age']
         gender = request.form['gender']
         weight = request.form['weight']
@@ -41,35 +60,75 @@ def recommend():
         allergies = request.form['allergies']
         foodtype = request.form['foodtype']
 
-        # USDA API queries based on user preferences
-        try:
-            # Query restaurants or related foods (example: breakfast foods)
-            breakfast_query = "breakfast"
-            dinner_query = "dinner"
-            breakfast_data = fetch_usda_data(breakfast_query, USDA_API_KEY)
-            dinner_data = fetch_usda_data(dinner_query, USDA_API_KEY)
+        # -------------------------
+        # Gemini Prompt
+        # -------------------------
+        prompt = f"""
+        You are a certified nutritionist and fitness coach.
 
-            # Process API results to extract food names
-            breakfast_names = [item["description"] for item in breakfast_data.get("foods", [])]
-            dinner_names = [item["description"] for item in dinner_data.get("foods", [])]
+        User Profile:
+        - Age: {age}
+        - Gender: {gender}
+        - Weight: {weight} kg
+        - Height: {height} cm
+        - Diet preference: {veg_or_nonveg}
+        - Health condition: {disease}
+        - Allergies: {allergies}
+        - Region: {region}
+        - Preferred food type: {foodtype}
 
-            # Example static workout recommendations
-            workout_names = ["Jogging", "Yoga", "Strength Training", "Cycling", "Swimming", "Pilates"]
+        Generate personalized recommendations.
 
-            # Restaurants can still be provided statically or by a different API
-            restaurant_names = ["Local Diner", "Healthy Eats Cafe", "Asian Fusion", "Mediterranean Bistro", "Vegan Delight", "Protein Paradise"]
+        IMPORTANT:
+        - Respond ONLY in valid JSON
+        - No explanations
+        - No markdown
+        - No extra text
 
-            return render_template(
-                'result.html',
-                restaurant_names=restaurant_names,
-                breakfast_names=breakfast_names,
-                dinner_names=dinner_names,
-                workout_names=workout_names
-            )
-        except Exception as e:
-            return f"An error occurred while fetching recommendations: {str(e)}"
+        JSON format:
+        {{
+          "breakfast": ["item1", "item2", "item3"],
+          "dinner": ["item1", "item2", "item3"],
+          "workouts": ["item1", "item2", "item3"]
+        }}
+        """
 
-    return render_template('details.html')
+        # -------------------------
+        # Gemini Call
+        # -------------------------
+        response = model.generate_content(prompt)
+        # Debug (optional – comment after testing)
+        print("RAW GEMINI OUTPUT:\n", response.text)
 
+        # -------------------------
+        # Parse Gemini Output Safely
+        # -------------------------
+        data = extract_json(response.text)
+
+        # -------------------------
+        # Render Results
+        # -------------------------
+        return render_template(
+            'result.html',
+            breakfast_names=data["breakfast"],
+            dinner_names=data["dinner"],
+            workout_names=data["workouts"],
+            restaurant_names=[]
+        )
+
+    except Exception as e:
+        # Safe fallback (never crash app)
+        return render_template(
+            'result.html',
+            breakfast_names=["Oats", "Fruit Bowl", "Boiled Eggs"],
+            dinner_names=["Rice & Dal", "Vegetable Curry", "Salad"],
+            workout_names=["Walking", "Yoga", "Stretching"],
+            restaurant_names=[]
+        )
+
+
+# =========================
+# App Runner
+# =========================
 if __name__ == '__main__':
     app.run(debug=True)
