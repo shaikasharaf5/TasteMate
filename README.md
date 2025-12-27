@@ -27,7 +27,7 @@ Recommendations are generated based on user details such as age, gender, diet pr
 ---
 
 ## 📁 Project Structure
-
+```
 project/
 │── app.py
 │── requirements.txt
@@ -38,7 +38,7 @@ project/
 │ ├── details.html
 │ └── result.html
 └── static/
-
+```
 ---
 
 ## ⚙️ Prerequisites
@@ -54,8 +54,9 @@ project/
 
 ### 1️⃣ Create a `.env` file (DO NOT COMMIT)
 
-```env
+```
 GEMINI_API_KEY=your_gemini_api_key_here
+```
 Make sure .env is listed in .gitignore.
 📦 Install Dependencies
 pip install -r requirements.txt
@@ -68,19 +69,20 @@ cd REPO_NAME
 2️⃣ (Optional but recommended) Create virtual environment
 
 Windows
-
+```
 python -m venv venv
 venv\Scripts\activate
-
+```
 
 Linux / macOS
-
+```
 python3 -m venv venv
 source venv/bin/activate
-
+```
 3️⃣ Run the Flask app
+```
 python app.py
-
+```
 4️⃣ Open in Browser
 http://127.0.0.1:5000/
 
