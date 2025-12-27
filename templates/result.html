@@ -2,42 +2,112 @@
 <html>
   <head>
     <title>Diet Recommendations</title>
-    <!-- Add Bootstrap CSS -->
+
+    <!-- Bootstrap CSS -->
     <link
       rel="stylesheet"
       href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
     />
+
+    <style>
+      body {
+        background-color: #f4f8fb;
+      }
+      .meal-card {
+        border-radius: 12px;
+        height: min(230px, auto);
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      .meal-title {
+        font-weight: bold;
+        color: #2c3e50;
+      }
+    </style>
   </head>
+
   <body>
-    <h1>Diet Recommendations</h1>
-
     <div class="container mt-5">
-      <h3>Restaurants:</h3>
-      <h3>Breakfast</h3>
-<ul>
-  {% for item in breakfast_names %}
-    <li>{{ item }}</li>
-  {% endfor %}
-</ul>
+      <h1 class="text-center mb-4">Your Personalized Diet Plan</h1>
 
-<h3>Dinner</h3>
-<ul>
-  {% for item in dinner_names %}
-    <li>{{ item }}</li>
-  {% endfor %}
-</ul>
+      <!-- Yoga -->
+      <h3 class="mt-4">🧘 Yoga</h3>
+      <div class="row">
+        {% for pose in yoga %}
+        <div class="col-md-4 mb-4">
+          <div class="card meal-card p-3 bg-light">
+            <h5 class="meal-title">{{ pose.name }}</h5>
+            <p>⏱ Duration: {{ pose.duration }}</p>
+            <p>🔥 Calories Burned: {{ pose.calories_burned }} kcal</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <!-- Breakfast -->
+      <h3 class="mt-4">🍳 Breakfast</h3>
+      <div class="row">
+        {% for item in breakfast %}
+        <div class="col-md-4 mb-4">
+          <div class="card meal-card p-3">
+            <h5 class="meal-title">{{ item.name }}</h5>
+            <p><b>Quantity:</b> {{ item.quantity }}</p>
+            <p>🔥 Calories: {{ item.calories }} kcal</p>
+            <p>💪 Protein: {{ item.protein }} g</p>
+            <p>🍞 Carbs: {{ item.carbs }} g</p>
+            <p>🥑 Fats: {{ item.fats }} g</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
 
-<h3>Workouts</h3>
-<ul>
-  {% for item in workout_names %}
-    <li>{{ item }}</li>
-  {% endfor %}
-</ul>
+      <!-- Lunch -->
+      <h3 class="mt-4">🍽 Lunch</h3>
+      <div class="row">
+        {% for item in lunch %}
+        <div class="col-md-4 mb-4">
+          <div class="card meal-card p-3">
+            <h5 class="meal-title">{{ item.name }}</h5>
+            <p><b>Quantity:</b> {{ item.quantity }}</p>
+            <p>🔥 Calories: {{ item.calories }} kcal</p>
+            <p>💪 Protein: {{ item.protein }} g</p>
+            <p>🍞 Carbs: {{ item.carbs }} g</p>
+            <p>🥑 Fats: {{ item.fats }} g</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
 
-
+      <!-- Workouts -->
+      <h3 class="mt-4">🏃 Workouts</h3>
+      <div class="row">
+        {% for workout in workouts %}
+        <div class="col-md-4 mb-4">
+          <div class="card meal-card p-3 bg-light">
+            <h5 class="meal-title">{{ workout.name }}</h5>
+            <p>⏱ Duration: {{ workout.duration }}</p>
+            <p>🔥 Calories Burned: {{ workout.calories_burned }} kcal</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <!-- Dinner -->
+      <h3 class="mt-4">🍽 Dinner</h3>
+      <div class="row">
+        {% for item in dinner %}
+        <div class="col-md-4 mb-4">
+          <div class="card meal-card p-3">
+            <h5 class="meal-title">{{ item.name }}</h5>
+            <p><b>Quantity:</b> {{ item.quantity }}</p>
+            <p>🔥 Calories: {{ item.calories }} kcal</p>
+            <p>💪 Protein: {{ item.protein }} g</p>
+            <p>🍞 Carbs: {{ item.carbs }} g</p>
+            <p>🥑 Fats: {{ item.fats }} g</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
     </div>
 
-    <!-- Add Bootstrap JS and jQuery -->
+    <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.7/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
