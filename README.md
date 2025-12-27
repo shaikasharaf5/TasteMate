@@ -50,22 +50,28 @@ project/
 
 ---
 
-## 🔐 Environment Setup
+## ▶️ How to Run the Project
 
-### 1️⃣ Create a `.env` file (DO NOT COMMIT)
+1️⃣ Clone the repository
+```
+git clone https://github.com/shaikasharaf5/TasteMate.git
+cd TasteMate
+```
+
+### 🔐 Environment Setup
+
+#### Create a `.env` file (DO NOT COMMIT)
 
 ```
 GEMINI_API_KEY=your_gemini_api_key_here
 ```
 Make sure .env is listed in .gitignore.
+
 📦 Install Dependencies
+```
 pip install -r requirements.txt
-
-▶️ How to Run the Project
-1️⃣ Clone the repository
-git clone https://github.com/USERNAME/REPO_NAME.git
-cd REPO_NAME
-
+```
+---
 2️⃣ (Optional but recommended) Create virtual environment
 
 Windows
@@ -79,66 +85,60 @@ Linux / macOS
 python3 -m venv venv
 source venv/bin/activate
 ```
+---
 3️⃣ Run the Flask app
 ```
 python app.py
 ```
+---
+
 4️⃣ Open in Browser
 http://127.0.0.1:5000/
 
+---
+
 🧪 How It Works
 
-User fills the form with personal details
 
-Data is sent to Flask backend
+- User fills the form with personal details
 
-Gemini AI generates recommendations
+- Data is sent to Flask backend
 
-JSON response is safely parsed
+- Gemini AI generates recommendations
 
-Results are displayed on UI
+- JSON response is safely parsed
+
+- Results are displayed on UI
+  
+
 
 🔒 Security Notes
 
-Never hardcode API keys
+- Never hardcode API keys
 
-Never push .env to GitHub
+- Never push .env to GitHub
 
-Rotate keys if accidentally exposed
+- Rotate keys if accidentally exposed
 
-Use environment variables in production
+- Use environment variables in production
+  
+
 
 📌 Future Enhancements
 
-Calorie & macro calculation
+- Calorie & macro calculation
 
-User authentication
+- User authentication
 
-Recommendation history
+- Recommendation history
 
-Indian regional food optimization
+- Indian regional food optimization
 
-Database integration (MongoDB / PostgreSQL)
+- Database integration (MongoDB / PostgreSQL)
 
-MERN stack version
+- MERN stack version
 
 📜 License
 
-This project is intended for educational and learning purposes.
+-- This project is intended for educational and learning purposes.
 
-
----
-
-## ✅ You now have
-✔ `requirements.txt`  
-✔ `.gitignore`  
-✔ Full `README.md`  
-
-If you want next, I can:
-- Generate `requirements.txt` automatically from your environment  
-- Add screenshots section to README  
-- Write a **college project report**  
-- Convert this to **MERN**  
-- Add **nutrition math (BMI, BMR, TDEE)**  
-
-Just tell me the next step.
