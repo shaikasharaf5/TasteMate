@@ -1,11 +1,10 @@
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 import google.generativeai as genai
 import json
 import re
 import os
 import hashlib
-from functools import lru_cache
 
 # =========================
 # Setup
@@ -24,8 +23,19 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-key")  # required for
 
 # Load fallback data once at startup for better performance
 FALLBACK_DATA_PATH = os.path.join(os.path.dirname(__file__), "fallback_data.json")
-with open(FALLBACK_DATA_PATH, "r") as f:
-    FALLBACK_DATA = json.load(f)
+try:
+    with open(FALLBACK_DATA_PATH, "r") as f:
+        FALLBACK_DATA = json.load(f)
+except (FileNotFoundError, json.JSONDecodeError) as e:
+    print(f"Warning: Could not load fallback data: {e}")
+    # Provide minimal fallback if file is missing
+    FALLBACK_DATA = {
+        "yoga": [],
+        "breakfast": [],
+        "lunch": [],
+        "dinner": [],
+        "workouts": []
+    }
 
 # Simple in-memory cache for API responses
 RESPONSE_CACHE = {}
@@ -86,13 +96,6 @@ def create_cache_key(user_data):
     return hashlib.md5(data_str.encode()).hexdigest()
 
 
-# Simple in-memory cache with LRU eviction (max 100 entries)
-@lru_cache(maxsize=100)
-def get_cached_recommendation(cache_key):
-    """Placeholder for cached recommendations - returns None if not cached"""
-    return None
-
-
 # =========================
 # Routes
 # =========================
@@ -110,6 +113,9 @@ def recommend():
         validation_errors = validate_user_input(request.form)
         if validation_errors:
             print("Validation errors:", validation_errors)
+            # Flash error messages to inform the user
+            for error in validation_errors:
+                flash(error, "error")
             # Use fallback data for invalid inputs
             session["results"] = FALLBACK_DATA
             return redirect(url_for("results"))
@@ -229,10 +235,10 @@ def recommend():
         data = extract_json(response.text)
 
         # -------------------------
-        # Cache the response (limit cache size to 100 entries)
+        # Cache the response (limit cache size to 100 entries with FIFO eviction)
         # -------------------------
         if len(RESPONSE_CACHE) >= 100:
-            # Remove oldest entry (simple FIFO eviction)
+            # Remove oldest entry (FIFO eviction)
             RESPONSE_CACHE.pop(next(iter(RESPONSE_CACHE)))
         RESPONSE_CACHE[cache_key] = data
 
