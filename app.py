@@ -1,9 +1,10 @@
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 import google.generativeai as genai
 import json
 import re
 import os
+import hashlib
 
 # =========================
 # Setup
@@ -20,15 +21,79 @@ model = genai.GenerativeModel("gemini-2.5-flash")
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-key")  # required for session
 
+# Load fallback data once at startup for better performance
+FALLBACK_DATA_PATH = os.path.join(os.path.dirname(__file__), "fallback_data.json")
+try:
+    with open(FALLBACK_DATA_PATH, "r") as f:
+        FALLBACK_DATA = json.load(f)
+except (FileNotFoundError, json.JSONDecodeError) as e:
+    print(f"Warning: Could not load fallback data: {e}")
+    # Provide minimal fallback if file is missing
+    FALLBACK_DATA = {
+        "yoga": [],
+        "breakfast": [],
+        "lunch": [],
+        "dinner": [],
+        "workouts": []
+    }
+
+# Simple in-memory cache for API responses
+RESPONSE_CACHE = {}
+
 
 # =========================
 # Helper: Safe JSON Extractor
 # =========================
 def extract_json(text):
-    match = re.search(r"\{[\s\S]*\}", text)
+    # Use non-greedy match and more efficient regex pattern
+    match = re.search(r"\{.*?\}", text, re.DOTALL)
     if not match:
         raise ValueError("No JSON found in Gemini response")
     return json.loads(match.group())
+
+
+# =========================
+# Helper: Input Validator
+# =========================
+def validate_user_input(form_data):
+    """Validate user inputs to prevent unnecessary API calls"""
+    errors = []
+    
+    # Validate age
+    try:
+        age = int(form_data.get("age", 0))
+        if age < 1 or age > 120:
+            errors.append("Age must be between 1 and 120")
+    except (ValueError, TypeError):
+        errors.append("Invalid age")
+    
+    # Validate weight
+    try:
+        weight = float(form_data.get("weight", 0))
+        if weight < 1 or weight > 500:
+            errors.append("Weight must be between 1 and 500 kg")
+    except (ValueError, TypeError):
+        errors.append("Invalid weight")
+    
+    # Validate height
+    try:
+        height = float(form_data.get("height", 0))
+        if height < 0.5 or height > 3.0:
+            errors.append("Height must be between 0.5 and 3.0 meters")
+    except (ValueError, TypeError):
+        errors.append("Invalid height")
+    
+    return errors
+
+
+# =========================
+# Helper: Request Cache
+# =========================
+def create_cache_key(user_data):
+    """Create a cache key from user inputs"""
+    # Sort to ensure consistent ordering
+    data_str = json.dumps(user_data, sort_keys=True)
+    return hashlib.md5(data_str.encode()).hexdigest()
 
 
 # =========================
@@ -43,6 +108,19 @@ def index():
 def recommend():
     try:
         # -------------------------
+        # Validate Inputs
+        # -------------------------
+        validation_errors = validate_user_input(request.form)
+        if validation_errors:
+            print("Validation errors:", validation_errors)
+            # Flash error messages to inform the user
+            for error in validation_errors:
+                flash(error, "error")
+            # Use fallback data for invalid inputs
+            session["results"] = FALLBACK_DATA
+            return redirect(url_for("results"))
+
+        # -------------------------
         # User Inputs
         # -------------------------
         age = request.form["age"]
@@ -54,6 +132,28 @@ def recommend():
         region = request.form["region"]
         allergies = request.form["allergies"]
         foodtype = request.form["foodtype"]
+
+        # -------------------------
+        # Check Cache
+        # -------------------------
+        user_data = {
+            "age": age,
+            "gender": gender,
+            "weight": weight,
+            "height": height,
+            "veg_or_nonveg": veg_or_nonveg,
+            "disease": disease,
+            "region": region,
+            "allergies": allergies,
+            "foodtype": foodtype,
+        }
+        cache_key = create_cache_key(user_data)
+        
+        # Check if we have a cached response
+        if cache_key in RESPONSE_CACHE:
+            print(f"Cache hit for request {cache_key[:8]}...")
+            session["results"] = RESPONSE_CACHE[cache_key]
+            return redirect(url_for("results"))
 
         # -------------------------
         # Prompt
@@ -135,6 +235,14 @@ def recommend():
         data = extract_json(response.text)
 
         # -------------------------
+        # Cache the response (limit cache size to 100 entries with FIFO eviction)
+        # -------------------------
+        if len(RESPONSE_CACHE) >= 100:
+            # Remove oldest entry (FIFO eviction)
+            RESPONSE_CACHE.pop(next(iter(RESPONSE_CACHE)))
+        RESPONSE_CACHE[cache_key] = data
+
+        # -------------------------
         # Store results in session
         # -------------------------
         session["results"] = data
@@ -143,108 +251,8 @@ def recommend():
 
     except Exception as e:
         print("ERROR:", e)
-
-        session["results"] = {
-            "yoga": [
-                {
-                    "name": "Sun Salutation",
-                    "duration": "15 minutes",
-                    "calories_burned": "100",
-                }
-            ],
-            "breakfast": [
-                {
-                    "name": "Oats Porridge",
-                    "quantity": "1 bowl",
-                    "calories": "180",
-                    "protein": "6",
-                    "carbs": "30",
-                    "fats": "4",
-                },
-                {
-                    "name": "Boiled Eggs",
-                    "quantity": "2 eggs",
-                    "calories": "140",
-                    "protein": "12",
-                    "carbs": "2",
-                    "fats": "10",
-                },
-                {
-                    "name": "Fruit Bowl",
-                    "quantity": "1 cup",
-                    "calories": "120",
-                    "protein": "2",
-                    "carbs": "28",
-                    "fats": "1",
-                },
-            ],
-            "lunch": [
-                {
-                    "name": "Veg Salad",
-                    "quantity": "1 bowl",
-                    "calories": "100",
-                    "protein": "3",
-                    "carbs": "15",
-                    "fats": "2",
-                },
-                {
-                    "name": "rice with curry",
-                    "quantity": "1 plate",
-                    "calories": "350",
-                    "protein": "10",
-                    "carbs": "60",
-                    "fats": "8",
-                },
-                {
-                    "name": "roti with sabzi",
-                    "quantity": "2 rotis",
-                    "calories": "250",
-                    "protein": "6",
-                    "carbs": "40",
-                    "fats": "5",
-                },
-            ],
-            "dinner": [
-                {
-                    "name": "Steamed Rice",
-                    "quantity": "1 cup",
-                    "calories": "200",
-                    "protein": "4",
-                    "carbs": "45",
-                    "fats": "1",
-                },
-                {
-                    "name": "Dal",
-                    "quantity": "1 bowl",
-                    "calories": "150",
-                    "protein": "10",
-                    "carbs": "20",
-                    "fats": "3",
-                },
-                {
-                    "name": "Vegetable Curry",
-                    "quantity": "1 bowl",
-                    "calories": "120",
-                    "protein": "4",
-                    "carbs": "15",
-                    "fats": "5",
-                },
-            ],
-            "workouts": [
-                {
-                    "name": "Brisk Walking",
-                    "duration": "30 minutes",
-                    "calories_burned": "150",
-                },
-                {
-                    "name": "Stretching",
-                    "duration": "15 minutes",
-                    "calories_burned": "50",
-                },
-                {"name": "Yoga", "duration": "20 minutes", "calories_burned": "80"},
-            ],
-        }
-
+        # Use fallback data loaded at startup
+        session["results"] = FALLBACK_DATA
         return redirect(url_for("results"))
 
 

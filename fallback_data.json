@@ -1,0 +1,104 @@
+{
+  "yoga": [
+    {
+      "name": "Sun Salutation",
+      "duration": "15 minutes",
+      "calories_burned": "100"
+    }
+  ],
+  "breakfast": [
+    {
+      "name": "Oats Porridge",
+      "quantity": "1 bowl",
+      "calories": "180",
+      "protein": "6",
+      "carbs": "30",
+      "fats": "4"
+    },
+    {
+      "name": "Boiled Eggs",
+      "quantity": "2 eggs",
+      "calories": "140",
+      "protein": "12",
+      "carbs": "2",
+      "fats": "10"
+    },
+    {
+      "name": "Fruit Bowl",
+      "quantity": "1 cup",
+      "calories": "120",
+      "protein": "2",
+      "carbs": "28",
+      "fats": "1"
+    }
+  ],
+  "lunch": [
+    {
+      "name": "Veg Salad",
+      "quantity": "1 bowl",
+      "calories": "100",
+      "protein": "3",
+      "carbs": "15",
+      "fats": "2"
+    },
+    {
+      "name": "rice with curry",
+      "quantity": "1 plate",
+      "calories": "350",
+      "protein": "10",
+      "carbs": "60",
+      "fats": "8"
+    },
+    {
+      "name": "roti with sabzi",
+      "quantity": "2 rotis",
+      "calories": "250",
+      "protein": "6",
+      "carbs": "40",
+      "fats": "5"
+    }
+  ],
+  "dinner": [
+    {
+      "name": "Steamed Rice",
+      "quantity": "1 cup",
+      "calories": "200",
+      "protein": "4",
+      "carbs": "45",
+      "fats": "1"
+    },
+    {
+      "name": "Dal",
+      "quantity": "1 bowl",
+      "calories": "150",
+      "protein": "10",
+      "carbs": "20",
+      "fats": "3"
+    },
+    {
+      "name": "Vegetable Curry",
+      "quantity": "1 bowl",
+      "calories": "120",
+      "protein": "4",
+      "carbs": "15",
+      "fats": "5"
+    }
+  ],
+  "workouts": [
+    {
+      "name": "Brisk Walking",
+      "duration": "30 minutes",
+      "calories_burned": "150"
+    },
+    {
+      "name": "Stretching",
+      "duration": "15 minutes",
+      "calories_burned": "50"
+    },
+    {
+      "name": "Yoga",
+      "duration": "20 minutes",
+      "calories_burned": "80"
+    }
+  ]
+}
