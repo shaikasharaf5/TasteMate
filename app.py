@@ -4,6 +4,8 @@ import google.generativeai as genai
 import json
 import re
 import os
+import hashlib
+from functools import lru_cache
 
 # =========================
 # Setup
@@ -24,6 +26,9 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-key")  # required for
 FALLBACK_DATA_PATH = os.path.join(os.path.dirname(__file__), "fallback_data.json")
 with open(FALLBACK_DATA_PATH, "r") as f:
     FALLBACK_DATA = json.load(f)
+
+# Simple in-memory cache for API responses
+RESPONSE_CACHE = {}
 
 
 # =========================
@@ -72,6 +77,23 @@ def validate_user_input(form_data):
 
 
 # =========================
+# Helper: Request Cache
+# =========================
+def create_cache_key(user_data):
+    """Create a cache key from user inputs"""
+    # Sort to ensure consistent ordering
+    data_str = json.dumps(user_data, sort_keys=True)
+    return hashlib.md5(data_str.encode()).hexdigest()
+
+
+# Simple in-memory cache with LRU eviction (max 100 entries)
+@lru_cache(maxsize=100)
+def get_cached_recommendation(cache_key):
+    """Placeholder for cached recommendations - returns None if not cached"""
+    return None
+
+
+# =========================
 # Routes
 # =========================
 @app.route("/")
@@ -104,6 +126,28 @@ def recommend():
         region = request.form["region"]
         allergies = request.form["allergies"]
         foodtype = request.form["foodtype"]
+
+        # -------------------------
+        # Check Cache
+        # -------------------------
+        user_data = {
+            "age": age,
+            "gender": gender,
+            "weight": weight,
+            "height": height,
+            "veg_or_nonveg": veg_or_nonveg,
+            "disease": disease,
+            "region": region,
+            "allergies": allergies,
+            "foodtype": foodtype,
+        }
+        cache_key = create_cache_key(user_data)
+        
+        # Check if we have a cached response
+        if cache_key in RESPONSE_CACHE:
+            print(f"Cache hit for request {cache_key[:8]}...")
+            session["results"] = RESPONSE_CACHE[cache_key]
+            return redirect(url_for("results"))
 
         # -------------------------
         # Prompt
@@ -183,6 +227,14 @@ def recommend():
         # print("RAW GEMINI OUTPUT:\n", response.text)
 
         data = extract_json(response.text)
+
+        # -------------------------
+        # Cache the response (limit cache size to 100 entries)
+        # -------------------------
+        if len(RESPONSE_CACHE) >= 100:
+            # Remove oldest entry (simple FIFO eviction)
+            RESPONSE_CACHE.pop(next(iter(RESPONSE_CACHE)))
+        RESPONSE_CACHE[cache_key] = data
 
         # -------------------------
         # Store results in session
