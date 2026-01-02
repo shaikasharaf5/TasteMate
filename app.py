@@ -20,15 +20,55 @@ model = genai.GenerativeModel("gemini-2.5-flash")
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-key")  # required for session
 
+# Load fallback data once at startup for better performance
+FALLBACK_DATA_PATH = os.path.join(os.path.dirname(__file__), "fallback_data.json")
+with open(FALLBACK_DATA_PATH, "r") as f:
+    FALLBACK_DATA = json.load(f)
+
 
 # =========================
 # Helper: Safe JSON Extractor
 # =========================
 def extract_json(text):
-    match = re.search(r"\{[\s\S]*\}", text)
+    # Use non-greedy match and more efficient regex pattern
+    match = re.search(r"\{.*?\}", text, re.DOTALL)
     if not match:
         raise ValueError("No JSON found in Gemini response")
     return json.loads(match.group())
+
+
+# =========================
+# Helper: Input Validator
+# =========================
+def validate_user_input(form_data):
+    """Validate user inputs to prevent unnecessary API calls"""
+    errors = []
+    
+    # Validate age
+    try:
+        age = int(form_data.get("age", 0))
+        if age < 1 or age > 120:
+            errors.append("Age must be between 1 and 120")
+    except (ValueError, TypeError):
+        errors.append("Invalid age")
+    
+    # Validate weight
+    try:
+        weight = float(form_data.get("weight", 0))
+        if weight < 1 or weight > 500:
+            errors.append("Weight must be between 1 and 500 kg")
+    except (ValueError, TypeError):
+        errors.append("Invalid weight")
+    
+    # Validate height
+    try:
+        height = float(form_data.get("height", 0))
+        if height < 0.5 or height > 3.0:
+            errors.append("Height must be between 0.5 and 3.0 meters")
+    except (ValueError, TypeError):
+        errors.append("Invalid height")
+    
+    return errors
 
 
 # =========================
@@ -42,6 +82,16 @@ def index():
 @app.route("/recommend", methods=["POST"])
 def recommend():
     try:
+        # -------------------------
+        # Validate Inputs
+        # -------------------------
+        validation_errors = validate_user_input(request.form)
+        if validation_errors:
+            print("Validation errors:", validation_errors)
+            # Use fallback data for invalid inputs
+            session["results"] = FALLBACK_DATA
+            return redirect(url_for("results"))
+
         # -------------------------
         # User Inputs
         # -------------------------
@@ -143,108 +193,8 @@ def recommend():
 
     except Exception as e:
         print("ERROR:", e)
-
-        session["results"] = {
-            "yoga": [
-                {
-                    "name": "Sun Salutation",
-                    "duration": "15 minutes",
-                    "calories_burned": "100",
-                }
-            ],
-            "breakfast": [
-                {
-                    "name": "Oats Porridge",
-                    "quantity": "1 bowl",
-                    "calories": "180",
-                    "protein": "6",
-                    "carbs": "30",
-                    "fats": "4",
-                },
-                {
-                    "name": "Boiled Eggs",
-                    "quantity": "2 eggs",
-                    "calories": "140",
-                    "protein": "12",
-                    "carbs": "2",
-                    "fats": "10",
-                },
-                {
-                    "name": "Fruit Bowl",
-                    "quantity": "1 cup",
-                    "calories": "120",
-                    "protein": "2",
-                    "carbs": "28",
-                    "fats": "1",
-                },
-            ],
-            "lunch": [
-                {
-                    "name": "Veg Salad",
-                    "quantity": "1 bowl",
-                    "calories": "100",
-                    "protein": "3",
-                    "carbs": "15",
-                    "fats": "2",
-                },
-                {
-                    "name": "rice with curry",
-                    "quantity": "1 plate",
-                    "calories": "350",
-                    "protein": "10",
-                    "carbs": "60",
-                    "fats": "8",
-                },
-                {
-                    "name": "roti with sabzi",
-                    "quantity": "2 rotis",
-                    "calories": "250",
-                    "protein": "6",
-                    "carbs": "40",
-                    "fats": "5",
-                },
-            ],
-            "dinner": [
-                {
-                    "name": "Steamed Rice",
-                    "quantity": "1 cup",
-                    "calories": "200",
-                    "protein": "4",
-                    "carbs": "45",
-                    "fats": "1",
-                },
-                {
-                    "name": "Dal",
-                    "quantity": "1 bowl",
-                    "calories": "150",
-                    "protein": "10",
-                    "carbs": "20",
-                    "fats": "3",
-                },
-                {
-                    "name": "Vegetable Curry",
-                    "quantity": "1 bowl",
-                    "calories": "120",
-                    "protein": "4",
-                    "carbs": "15",
-                    "fats": "5",
-                },
-            ],
-            "workouts": [
-                {
-                    "name": "Brisk Walking",
-                    "duration": "30 minutes",
-                    "calories_burned": "150",
-                },
-                {
-                    "name": "Stretching",
-                    "duration": "15 minutes",
-                    "calories_burned": "50",
-                },
-                {"name": "Yoga", "duration": "20 minutes", "calories_burned": "80"},
-            ],
-        }
-
+        # Use fallback data loaded at startup
+        session["results"] = FALLBACK_DATA
         return redirect(url_for("results"))
 
 
